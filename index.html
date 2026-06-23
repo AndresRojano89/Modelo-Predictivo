@@ -693,9 +693,18 @@ tr:hover td{background:#faf3e8}
   margin-top:4px;font-weight:700;color:#111827;
 }
 
+/* ─── PRINT STYLES ─── */
 @media print{
-  .med-doc-page{page-break-after:always;}
-  .med-doc-container{box-shadow:none;border-radius:0;}
+  .med-doc-page{
+    page-break-after: always;
+    padding: 20mm 15mm;
+    min-height: 277mm;
+  }
+  .med-doc-container{
+    box-shadow: none;
+    border-radius: 0;
+    max-width: 100%;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1132,10 +1141,89 @@ tr:hover td{background:#faf3e8}
 }
 
 @media print {
-  #modal-prediccion .modal { box-shadow: none !important; border: 1px solid #ccc !important; }
-  .modal-prediccion-actions { display: none !important; }
-  .modal-pred-pager { display: none !important; }
-  .modal-pred-page { display: block !important; page-break-after: always; }
+  * {
+    margin: 0;
+    padding: 0;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  
+  @page {
+    margin: 20mm 15mm 20mm 15mm;
+    size: A4;
+  }
+  
+  .hdr, .sidebar, .layout > div:first-child {
+    display: none !important;
+  }
+  
+  .main {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    max-width: 100%;
+  }
+  
+  .modal-bg.on {
+    display: flex !important;
+    position: static !important;
+    background: transparent !important;
+  }
+  
+  .modal {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    border-radius: 0;
+    max-height: none;
+    overflow: visible;
+  }
+  
+  #modal-prediccion .modal { 
+    box-shadow: none !important; 
+    border: 1px solid #ccc !important; 
+  }
+  
+  .modal-prediccion-actions { 
+    display: none !important; 
+  }
+  
+  .modal-pred-pager { 
+    display: none !important; 
+  }
+  
+  .modal-pred-page { 
+    display: block !important; 
+    page-break-after: always; 
+  }
+  
+  .med-doc-page {
+    page-break-after: always;
+    min-height: 277mm;
+    padding: 20mm 15mm;
+    margin: 0;
+    border-bottom: none !important;
+    background: white !important;
+  }
+  
+  .med-doc-container {
+    box-shadow: none;
+    border-radius: 0;
+    max-width: 100%;
+    margin: 0;
+  }
+  
+  .med-doc-nav {
+    display: none !important;
+  }
+  
+  .section, .sec {
+    page-break-before: auto;
+  }
 }
 
 
@@ -1678,6 +1766,17 @@ canvas { max-height: 100%; }
   filter: brightness(1);
 }
 
+/* ─── PATIENT SEARCH ─── */
+#patientSearch::placeholder {
+  color: var(--ink-soft);
+}
+
+#patientSearch:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(30,58,95,.12);
+  outline: none;
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -1725,7 +1824,7 @@ canvas { max-height: 100%; }
     <div class="hdr-brand-text"><div class="hdr-name">HealthAnalytics</div><div class="hdr-sub">IPS · Sistema Clínico</div></div>
   </div>
   <div class="hdr-mid">
-    <div class="srch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Buscar paciente, ID, diagnóstico…" id="globalSearch"></div>
+    
   </div>
   <div class="hdr-right">
     <div class="notifications" id="notifications">
@@ -1910,15 +2009,21 @@ canvas { max-height: 100%; }
   </div>
 
   <div class="tw table-card">
-    <div class="table-card__toolbar">
-      <div class="chip-grp" id="pac-risk-filters">
+    <div class="table-card__toolbar" style="flex-direction:column;gap:14px;align-items:flex-start">
+      <div style="display:flex;gap:12px;align-items:center;width:100%;flex-wrap:wrap">
+        <div class="srch" style="flex:1;max-width:400px;min-width:200px">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Buscar por nombre, ID, diagnóstico…" id="patientSearch" style="width:100%;background:var(--surface-muted);border:1px solid var(--border);color:var(--ink)" oninput="updatePatientSearch(this.value)">
+        </div>
+        <span id="pac-count" class="status-badge status-badge--neutral">Mostrando 0 de 0</span>
+      </div>
+      <div class="chip-grp" id="pac-risk-filters" style="width:100%">
         <button class="chip on" onclick="filterRisk(this,'todos')">Todos</button>
         <button class="chip" onclick="filterRisk(this,'Crítico')">Crítico</button>
         <button class="chip" onclick="filterRisk(this,'Alto')">Alto</button>
         <button class="chip" onclick="filterRisk(this,'Medio')">Medio</button>
         <button class="chip" onclick="filterRisk(this,'Bajo')">Bajo</button>
       </div>
-      <span id="pac-count" class="status-badge status-badge--neutral">Mostrando 0 de 0</span>
     </div>
     <div class="tbl-wrap">
       <table>
@@ -4113,6 +4218,12 @@ function filterRisk(el,f){
   renderTable(f);
 }
 
+function updatePatientSearch(searchTerm){
+  currentSearchQuery = searchTerm.trim();
+  currentPage = 1; // Resetear a página 1 cuando se busca
+  renderPageTable();
+}
+
 // Funciones de paginación
 function goToPage(page){
   currentPage = page;
@@ -6301,7 +6412,7 @@ function createSimplePdfBlob(title, lines) {
     const pageObj = 3 + index * 2;
     const contentObj = pageObj + 1;
     kids.push(`${pageObj} 0 R`);
-    const commands = ['BT', '/F1 16 Tf', '50 790 Td', `(${escapePdf(index === 0 ? title : `${title} (${index + 1})`)}) Tj`, '/F1 10 Tf'];
+    const commands = ['BT', '/F1 16 Tf', '50 750 Td', `(${escapePdf(index === 0 ? title : `${title} (${index + 1})`)}) Tj`, '/F1 10 Tf'];
     pageLines.forEach(line => {
       commands.push('0 -16 Td');
       commands.push(`(${escapePdf(line)}) Tj`);
@@ -6341,9 +6452,9 @@ function exportarReporteEjecutivoPDF() {
       `Fecha de generacion: ${new Date().toLocaleString('es-CO')}`,
       `Total de pacientes: ${records.length}`,
       `Ingesta Activa registrados: ${tandas.length}`,
-      `Edad promedio: ${insights.avgAge === null ? 'Sin dato' : formatClinicalNumber(insights.avgAge, 1) + ' anos'}`,
-      `Paciente mas joven: ${insights.youngestAge === null ? 'Sin dato' : formatClinicalNumber(insights.youngestAge, 0) + ' anos'}`,
-      `Paciente mas longevo: ${insights.oldestAge === null ? 'Sin dato' : formatClinicalNumber(insights.oldestAge, 0) + ' anos'}`,
+      `Edad promedio: ${insights.avgAge === null ? 'Sin dato' : formatClinicalNumber(insights.avgAge, 1) + ' años'}`,
+      `Paciente mas joven: ${insights.youngestAge === null ? 'Sin dato' : formatClinicalNumber(insights.youngestAge, 0) + ' años'}`,
+      `Paciente mas longevo: ${insights.oldestAge === null ? 'Sin dato' : formatClinicalNumber(insights.oldestAge, 0) + ' años'}`,
       `Riesgo clinico: Bajo ${risk.bajo}, Medio ${risk.medio}, Alto ${risk.alto}, Critico ${risk.critico}`,
       `Riesgo ML promedio: ${insights.avgMlRisk === null ? 'Sin dato' : formatClinicalPercent(insights.avgMlRisk, 1)}`,
       `Metricas ML: Accuracy ${ml.accuracy}%, Precision ${ml.precision}%, Recall ${ml.recall}%, F1 ${ml.f1}%`,
