@@ -6304,6 +6304,17 @@ function buildClinicalCsv(records) {
   return buildCsv(columns.map(column => column.label), rows);
 }
 
+function limitExportDecimals(value, maxDecimals = 2) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return value;
+  const factor = 10 ** maxDecimals;
+  const rounded = Math.round((value + Number.EPSILON) * factor) / factor;
+  return Object.is(rounded, -0) ? 0 : Number(rounded.toFixed(maxDecimals));
+}
+
+function limitExportRowDecimals(row, maxDecimals = 2) {
+  return row.map(value => limitExportDecimals(value, maxDecimals));
+}
+
 function htmlTableFromRows(headers, rows) {
   const head = `<tr>${headers.map(header => `<th>${escapeHTML(header)}</th>`).join('')}</tr>`;
   const body = rows.map(row => `<tr>${row.map(value => `<td>${escapeHTML(value)}</td>`).join('')}</tr>`).join('');
@@ -6470,7 +6481,10 @@ function exportarPacientesCriticosExcel() {
     const records = getClinicalRecords().filter(isCriticalOrHighPatient);
     requireExportData(records, 'No hay pacientes críticos o de alto riesgo para exportar');
     const columns = getClinicalExportColumns();
-    const rows = records.map((patient, index) => columns.map(column => column.value(patient, index)));
+    const rows = records.map((patient, index) => {
+      const row = columns.map(column => column.value(patient, index));
+      return limitExportRowDecimals(row, 2);
+    });
     const html = buildExcelHtml('Casos en Alerta', [{ title: 'Listado filtrado', headers: columns.map(column => column.label), rows }]);
     downloadBlob(new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' }), `pacientes_criticos_${safeReportDate()}.xls`);
   });
